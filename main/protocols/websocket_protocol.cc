@@ -1,3 +1,12 @@
+/**
+ * @file websocket_protocol.cc
+ * @brief WebSocket通信プロトコル実装
+ * 
+ * WebSocketを使用したサーバーとの通信プロトコルの実装です。
+ * 音声データのバイナリ伝送とJSON制御メッセージの送受信を行います。
+ * リアルタイム音声通信に最適化されています。
+ */
+
 #include "websocket_protocol.h"
 #include "board.h"
 #include "system_info.h"
@@ -12,19 +21,39 @@
 
 #define TAG "WS"
 
+/**
+ * @brief WebsocketProtocolコンストラクタ
+ * 
+ * WebSocket通信プロトコルを初期化します。
+ * イベントグループを作成して通信状態を管理します。
+ */
 WebsocketProtocol::WebsocketProtocol() {
+    // 通信イベント管理用のイベントグループを作成
     event_group_handle_ = xEventGroupCreate();
 }
 
+/**
+ * @brief WebsocketProtocolデストラクタ
+ * 
+ * WebSocket接続をクリーンアップし、リソースを解放します。
+ */
 WebsocketProtocol::~WebsocketProtocol() {
+    // WebSocketクライアントを削除
     if (websocket_ != nullptr) {
         delete websocket_;
     }
+    // イベントグループを削除
     vEventGroupDelete(event_group_handle_);
 }
 
+/**
+ * @brief プロトコルを開始
+ * @return 成功時true
+ * 
+ * 音声チャンネルが必要になったときのみサーバーに接続します。
+ */
 bool WebsocketProtocol::Start() {
-    // Only connect to server when audio channel is needed
+    // 音声チャンネルが必要な時のみサーバーに接続
     return true;
 }
 

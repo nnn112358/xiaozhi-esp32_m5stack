@@ -9,7 +9,7 @@
 
 namespace iot {
 
-// 这里仅定义 Lamp 的属性和方法，不包含具体的实现
+// ここではLampの属性とメソッドのみを定義し、具体的な実装は含まない
 class Lamp : public Thing {
 private:
 #ifdef CONFIG_IDF_TARGET_ESP32
@@ -35,12 +35,12 @@ public:
     Lamp() : Thing("Lamp", "A test lamp"), power_(false) {
         InitializeGpio();
 
-        // 定义设备的属性
+        // デバイスのプロパティを定義
         properties_.AddBooleanProperty("power", "Whether the lamp is on", [this]() -> bool {
             return power_;
         });
 
-        // 定义设备可以被远程执行的指令
+        // デバイスがリモートで実行できるコマンドを定義
         methods_.AddMethod("turn_on", "Turn on the lamp", ParameterList(), [this](const ParameterList& parameters) {
             power_ = true;
             gpio_set_level(gpio_num_, 1);

@@ -1,3 +1,12 @@
+/**
+ * @file system_info.cc
+ * @brief システム情報取得ユーティリティクラス実装
+ * 
+ * ESP32システムの各種情報（メモリ使用量、フラッシュサイズ、
+ * MACアドレス、チップ情報など）を取得するための実装ファイルです。
+ * デバッグやシステムモニタリングに使用されます。
+ */
+
 #include "system_info.h"
 
 #include <freertos/task.h>
@@ -14,6 +23,10 @@
 
 #define TAG "SystemInfo"
 
+/**
+ * @brief フラッシュメモリの総サイズを取得
+ * @return フラッシュサイズ（バイト）、エラー時は0
+ */
 size_t SystemInfo::GetFlashSize() {
     uint32_t flash_size;
     if (esp_flash_get_size(NULL, &flash_size) != ESP_OK) {
@@ -23,19 +36,33 @@ size_t SystemInfo::GetFlashSize() {
     return (size_t)flash_size;
 }
 
+/**
+ * @brief 起動後の最小空きヒープサイズを取得
+ * @return 最小空きヒープサイズ（バイト）
+ */
 size_t SystemInfo::GetMinimumFreeHeapSize() {
     return esp_get_minimum_free_heap_size();
 }
 
+/**
+ * @brief 現在の空きヒープサイズを取得
+ * @return 現在の空きヒープサイズ（バイト）
+ */
 size_t SystemInfo::GetFreeHeapSize() {
     return esp_get_free_heap_size();
 }
 
+/**
+ * @brief デバイスのMaCアドレスを取得
+ * @return MACアドレス文字列 ("xx:xx:xx:xx:xx:xx" 形式)
+ */
 std::string SystemInfo::GetMacAddress() {
     uint8_t mac[6];
 #if CONFIG_IDF_TARGET_ESP32P4
+    // ESP32-P4の場合はWiFiリモートAPIを使用
     esp_wifi_get_mac(WIFI_IF_STA, mac);
 #else
+    // その他のESP32シリーズ
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
 #endif
     char mac_str[18];
@@ -43,6 +70,10 @@ std::string SystemInfo::GetMacAddress() {
     return std::string(mac_str);
 }
 
+/**
+ * @brief チップモデル名を取得
+ * @return チップモデル名 ("esp32", "esp32s3", "esp32c3" など)
+ */
 std::string SystemInfo::GetChipModelName() {
     return std::string(CONFIG_IDF_TARGET);
 }

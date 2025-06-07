@@ -1,3 +1,11 @@
+/**
+ * @file display.h
+ * @brief ディスプレイ制御の基底クラス
+ * 
+ * LVGLライブラリを使用したLCD/OLEDディスプレイの統一インターフェース。
+ * ステータス表示、通知、チャットメッセージ、アイコン表示などの
+ * UI機能を提供します。
+ */
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -8,26 +16,55 @@
 
 #include <string>
 
+/**
+ * @struct DisplayFonts
+ * @brief ディスプレイで使用するフォント群
+ */
 struct DisplayFonts {
-    const lv_font_t* text_font = nullptr;
-    const lv_font_t* icon_font = nullptr;
-    const lv_font_t* emoji_font = nullptr;
+    const lv_font_t* text_font = nullptr;  // テキスト用フォント
+    const lv_font_t* icon_font = nullptr;  // アイコン用フォント
+    const lv_font_t* emoji_font = nullptr; // 絵文字用フォント
 };
 
+/**
+ * @class Display
+ * @brief ディスプレイ制御の基底クラス
+ * 
+ * LVGLを使用してLCDやOLEDディスプレイを制御します。
+ * ステータスバー、通知、アイコン、チャットメッセージなどの
+ * UI要素を管理します。
+ */
 class Display {
 public:
     Display();
     virtual ~Display();
 
+    /** ステータステキストを設定 */
     virtual void SetStatus(const char* status);
+    
+    /** 通知メッセージを表示（指定時間後に消える） */
     virtual void ShowNotification(const char* notification, int duration_ms = 3000);
     virtual void ShowNotification(const std::string &notification, int duration_ms = 3000);
+    
+    /** 感情表現を設定 */
     virtual void SetEmotion(const char* emotion);
+    
+    /** チャットメッセージを表示 */
     virtual void SetChatMessage(const char* role, const char* content);
+    
+    /** アイコンを設定 */
     virtual void SetIcon(const char* icon);
+    
+    /** プレビュー画像を設定 */
     virtual void SetPreviewImage(const lv_img_dsc_t* image);
+    
+    /** テーマ（ライト/ダーク）を設定 */
     virtual void SetTheme(const std::string& theme_name);
+    
+    /** 現在のテーマを取得 */
     virtual std::string GetTheme() { return current_theme_name_; }
+    
+    /** ステータスバーを更新 */
     virtual void UpdateStatusBar(bool update_all = false);
 
     inline int width() const { return width_; }
