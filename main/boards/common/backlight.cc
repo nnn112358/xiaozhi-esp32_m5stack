@@ -1,3 +1,11 @@
+/**
+ * @file backlight.cc
+ * @brief ディスプレイバックライト制御クラスの実装
+ * 
+ * ディスプレイのバックライト明度制御を実装します。
+ * 段階的な明度変更（フェード効果）とタイマー制御を提供します。
+ */
+
 #include "backlight.h"
 #include "settings.h"
 
@@ -6,18 +14,23 @@
 
 #define TAG "Backlight"
 
-
+/**
+ * @brief Backlightクラスのコンストラクタ
+ * 
+ * バックライト制御の初期化を行います。段階的な明度変更を実現する
+ * ためのタイマーを作成し、初期明度を0に設定します。
+ */
 Backlight::Backlight() {
-    // 创建背光渐变定时器
+    // バックライトの段階的変更用タイマーを作成
     const esp_timer_create_args_t timer_args = {
         .callback = [](void* arg) {
             auto self = static_cast<Backlight*>(arg);
             self->OnTransitionTimer();
         },
-        .arg = this,
-        .dispatch_method = ESP_TIMER_TASK,
-        .name = "backlight_timer",
-        .skip_unhandled_events = true,
+        .arg = this,                          // コールバック引数（thisポインタ）
+        .dispatch_method = ESP_TIMER_TASK,    // タスクコンテキストで実行
+        .name = "backlight_timer",            // タイマー名（デバッグ用）
+        .skip_unhandled_events = true,        // 未処理イベントをスキップ
     };
     ESP_ERROR_CHECK(esp_timer_create(&timer_args, &transition_timer_));
 }

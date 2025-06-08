@@ -1,3 +1,11 @@
+/**
+ * @file thing.h
+ * @brief IoTデバイス抽象化フレームワーク
+ * 
+ * このファイルはIoTデバイスの抽象化レイヤーを提供し、プロパティや
+ * メソッドを統一的に管理するフレームワークを定義します。
+ * 音声コマンドで制御可能なデバイスを簡単に作成できます。
+ */
 #ifndef THING_H
 #define THING_H
 
@@ -10,12 +18,23 @@
 
 namespace iot {
 
+/**
+ * @enum ValueType
+ * @brief IoTプロパティの値タイプ
+ */
 enum ValueType {
-    kValueTypeBoolean,
-    kValueTypeNumber,
-    kValueTypeString
+    kValueTypeBoolean,  // ブール型（true/false）
+    kValueTypeNumber,   // 数値型（整数）
+    kValueTypeString    // 文字列型
 };
 
+/**
+ * @class Property
+ * @brief IoTデバイスのプロパティ（状態値）を表すクラス
+ * 
+ * デバイスの現在の状態（例：電池レベル、温度、ON/OFF状態など）を
+ * 読み取り専用で提供します。getter関数でリアルタイムに値を取得します。
+ */
 class Property {
 private:
     std::string name_;

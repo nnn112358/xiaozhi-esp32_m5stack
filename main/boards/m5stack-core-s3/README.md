@@ -1,26 +1,26 @@
-# 使用说明 
+# 使用方法
 
 
-1. 设置编译目标为 esp32s3
+1. コンパイルターゲットをesp32s3に設定
 
 ```shell
 idf.py set-target esp32s3
 ```
 
-2. 修改配置 
+2. 設定を変更
 
 ```shell
 cp main/boards/m5stack-core-s3/sdkconfig.cores3 sdkconfig
 ```
 
-3. 编译烧录程序
+3. プログラムをコンパイル・フラッシュ
 
 ```shell
 idf.py build flash monitor
 ```
 
 > [!NOTE]
-> 进入下载模式：长按复位按键(约3秒)，直至内部指示灯亮绿色，松开按键。
+> ダウンロードモードに入る方法：リセットボタンを長押し（約3秒）し、内部インジケータライトが緑色に点灯するまで待ってから、ボタンを離してください。
 
 
  

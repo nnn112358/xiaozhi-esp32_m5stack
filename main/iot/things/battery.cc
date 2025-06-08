@@ -7,7 +7,7 @@
 
 namespace iot {
 
-// 这里仅定义 Battery 的属性和方法，不包含具体的实现
+// ここではBatteryの属性とメソッドのみを定義し、具体的な実装は含まない
 class Battery : public Thing {
 private:
     int level_ = 0;
@@ -16,7 +16,7 @@ private:
 
 public:
     Battery() : Thing("Battery", "The battery of the device") {
-        // 定义设备的属性
+        // デバイスのプロパティを定義
         properties_.AddNumberProperty("level", "Current battery level", [this]() -> int {
             auto& board = Board::GetInstance();
             if (board.GetBatteryLevel(level_, charging_, discharging_)) {

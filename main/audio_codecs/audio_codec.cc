@@ -1,3 +1,11 @@
+/**
+ * @file audio_codec.cc
+ * @brief オーディオコーデック基底クラス実装
+ * 
+ * すべてのオーディオコーデック（ES8311、ES8374、ES8388等）の
+ * 基底クラスの実装です。音声入出力の共通インターフェースを提供します。
+ */
+
 #include "audio_codec.h"
 #include "board.h"
 #include "settings.h"
@@ -8,16 +16,39 @@
 
 #define TAG "AudioCodec"
 
+/**
+ * @brief AudioCodecコンストラクタ
+ * 
+ * オーディオコーデックの基底クラスを初期化します。
+ */
 AudioCodec::AudioCodec() {
 }
 
+/**
+ * @brief AudioCodecデストラクタ
+ * 
+ * オーディオコーデックリソースをクリーンアップします。
+ */
 AudioCodec::~AudioCodec() {
 }
 
+/**
+ * @brief 音声データを出力
+ * @param data 出力する音声データバッファ
+ * 
+ * 16ビット音声データをコーデックに出力します。
+ */
 void AudioCodec::OutputData(std::vector<int16_t>& data) {
     Write(data.data(), data.size());
 }
 
+/**
+ * @brief 音声データを入力
+ * @param data 入力音声データを格納するバッファ
+ * @return データが取得できた場合true
+ * 
+ * コーデックから16ビット音声データを読み取ります。
+ */
 bool AudioCodec::InputData(std::vector<int16_t>& data) {
     int samples = Read(data.data(), data.size());
     if (samples > 0) {

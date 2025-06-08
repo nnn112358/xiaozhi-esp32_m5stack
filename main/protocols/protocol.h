@@ -1,3 +1,10 @@
+/**
+ * @file protocol.h
+ * @brief ネットワーク通信プロトコル基底クラス
+ * 
+ * WebSocketやMQTTなどの各種プロトコルの統一インターフェースと
+ * バイナリメッセージフォーマットを定義します。
+ */
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
@@ -7,38 +14,66 @@
 #include <chrono>
 #include <vector>
 
+/**
+ * @struct AudioStreamPacket
+ * @brief 音声ストリームパケット構造体
+ */
 struct AudioStreamPacket {
-    uint32_t timestamp = 0;
-    std::vector<uint8_t> payload;
+    uint32_t timestamp = 0;        // タイムスタンプ（ミリ秒）
+    std::vector<uint8_t> payload;  // 音声データ（Opusエンコード済み）
 };
 
+/**
+ * @struct BinaryProtocol2
+ * @brief バイナリプロトコルバージョン2フォーマット
+ */
 struct BinaryProtocol2 {
-    uint16_t version;
-    uint16_t type;          // Message type (0: OPUS, 1: JSON)
-    uint32_t reserved;      // Reserved for future use
-    uint32_t timestamp;     // Timestamp in milliseconds (used for server-side AEC)
-    uint32_t payload_size;  // Payload size in bytes
-    uint8_t payload[];      // Payload data
+    uint16_t version;       // プロトコルバージョン
+    uint16_t type;          // メッセージタイプ (0: OPUS, 1: JSON)
+    uint32_t reserved;      // 将来の拡張用予約領域
+    uint32_t timestamp;     // タイムスタンプ（ミリ秒、サーバー側AEC用）
+    uint32_t payload_size;  // ペイロードサイズ（バイト）
+    uint8_t payload[];      // ペイロードデータ
 } __attribute__((packed));
 
+/**
+ * @struct BinaryProtocol3
+ * @brief バイナリプロトコルバージョン3フォーマット（軽量版）
+ */
 struct BinaryProtocol3 {
-    uint8_t type;
-    uint8_t reserved;
-    uint16_t payload_size;
-    uint8_t payload[];
+    uint8_t type;           // メッセージタイプ
+    uint8_t reserved;       // 予約領域
+    uint16_t payload_size;  // ペイロードサイズ
+    uint8_t payload[];      // ペイロードデータ
 } __attribute__((packed));
 
+/**
+ * @enum AbortReason
+ * @brief 音声録音中断理由
+ */
 enum AbortReason {
-    kAbortReasonNone,
-    kAbortReasonWakeWordDetected
+    kAbortReasonNone,            // 中断なし
+    kAbortReasonWakeWordDetected // ウェイクワード検出で中断
 };
 
+/**
+ * @enum ListeningMode
+ * @brief 音声入力モード
+ */
 enum ListeningMode {
-    kListeningModeAutoStop,
-    kListeningModeManualStop,
-    kListeningModeRealtime // 需要 AEC 支持
+    kListeningModeAutoStop,   // 自動停止モード
+    kListeningModeManualStop, // 手動停止モード
+    kListeningModeRealtime    // リアルタイムモード（AECサポートが必要）
 };
 
+/**
+ * @class Protocol
+ * @brief ネットワーク通信プロトコルの基底抽象クラス
+ * 
+ * WebSocket、MQTTなどの具体的なプロトコル実装の基底となるクラス。
+ * 音声データの送受信、JSONメッセージ処理、接続管理などの
+ * 機能を統一インターフェースで提供します。
+ */
 class Protocol {
 public:
     virtual ~Protocol() = default;

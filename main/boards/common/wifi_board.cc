@@ -1,3 +1,11 @@
+/**
+ * @file wifi_board.cc
+ * @brief WiFi対応ボードクラスの実装
+ * 
+ * WiFi機能を持つESP32ボードの共通実装を提供します。
+ * WiFi接続管理、設定モード、ネットワーク通信プロトコルの初期化を行います。
+ */
+
 #include "wifi_board.h"
 
 #include "display.h"
@@ -23,43 +31,71 @@
 
 static const char *TAG = "WifiBoard";
 
+/**
+ * @brief WifiBoardクラスのコンストラクタ
+ * 
+ * WiFiボードの基本初期化を行います。設定から強制APモードフラグを
+ * 確認し、必要に応じて設定モードに入る準備をします。
+ */
 WifiBoard::WifiBoard() {
+    // WiFi設定の読み込み（自動保存有効）
     Settings settings("wifi", true);
+    
+    // 強制APモードフラグをチェック
+    // この値は ResetWifiConfiguration() で設定される
     wifi_config_mode_ = settings.GetInt("force_ap") == 1;
+    
     if (wifi_config_mode_) {
         ESP_LOGI(TAG, "force_ap is set to 1, reset to 0");
+        // フラグを消費して0にリセット（一回限りの設定）
         settings.SetInt("force_ap", 0);
     }
 }
 
+/**
+ * @brief ボードタイプ名の取得
+ * @return std::string "wifi" 固定文字列
+ */
 std::string WifiBoard::GetBoardType() {
     return "wifi";
 }
 
+/**
+ * @brief WiFi設定モードに入る
+ * 
+ * デバイスをAPモードで起動し、WiFi設定用のWebサーバーを開始します。
+ * ユーザーはブラウザ経由でWiFi接続情報を設定できます。設定完了後は
+ * デバイスが自動的に再起動されます。
+ */
 void WifiBoard::EnterWifiConfigMode() {
+    // アプリケーション状態をWiFi設定中に変更
     auto& application = Application::GetInstance();
     application.SetDeviceState(kDeviceStateWifiConfiguring);
 
+    // WiFi設定APを開始
     auto& wifi_ap = WifiConfigurationAp::GetInstance();
-    wifi_ap.SetLanguage(Lang::CODE);
-    wifi_ap.SetSsidPrefix("Xiaozhi");
+    wifi_ap.SetLanguage(Lang::CODE);       // 現在の言語設定を適用
+    wifi_ap.SetSsidPrefix("Xiaozhi");      // APのSSIDプレフィックス
     wifi_ap.Start();
 
-    // 显示 WiFi 配置 AP 的 SSID 和 Web 服务器 URL
-    std::string hint = Lang::Strings::CONNECT_TO_HOTSPOT;
-    hint += wifi_ap.GetSsid();
-    hint += Lang::Strings::ACCESS_VIA_BROWSER;
-    hint += wifi_ap.GetWebServerUrl();
+    // ユーザー向けの接続ガイダンスを作成
+    std::string hint = Lang::Strings::CONNECT_TO_HOTSPOT;  // "次のホットスポットに接続してください: "
+    hint += wifi_ap.GetSsid();                             // 生成されたAP SSID
+    hint += Lang::Strings::ACCESS_VIA_BROWSER;             // "\nブラウザでアクセス: "
+    hint += wifi_ap.GetWebServerUrl();                     // WebサーバーURL（通常 http://192.168.4.1）
     hint += "\n\n";
     
-    // 播报配置 WiFi 的提示
+    // 音声とテキストでWiFi設定のアナウンスを再生
     application.Alert(Lang::Strings::WIFI_CONFIG_MODE, hint.c_str(), "", Lang::Sounds::P3_WIFICONFIG);
     
-    // Wait forever until reset after configuration
+    // 設定完了まで無限待機（設定後は自動再起動される）
     while (true) {
+        // メモリ使用量をログ出力（デバッグ用）
         int free_sram = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
         int min_free_sram = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
         ESP_LOGI(TAG, "Free internal: %u minimal internal: %u", free_sram, min_free_sram);
+        
+        // 10秒間隔でログ出力
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }

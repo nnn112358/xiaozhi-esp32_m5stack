@@ -1,3 +1,12 @@
+/**
+ * @file m5stack_core_s3.cc
+ * @brief M5Stack CoreS3 ボードの実装
+ * 
+ * M5Stack CoreS3 開発ボード専用の実装を提供します。
+ * AXP2101 PMIC、カメラ、LCD、オーディオコーデック、IoTデバイスなどの
+ * 初期化と制御を行います。
+ */
+
 #include "wifi_board.h"
 #include "cores3_audio_codec.h"
 #include "display/lcd_display.h"
@@ -17,46 +26,93 @@
 #include <esp_timer.h>
 #include "esp32_camera.h"
 
-
 #define TAG "M5StackCoreS3Board"
 
-LV_FONT_DECLARE(font_puhui_20_4);
-LV_FONT_DECLARE(font_awesome_20_4);
+// LVGL フォント宣言
+LV_FONT_DECLARE(font_puhui_20_4);      // 中国語・日本語対応フォント
+LV_FONT_DECLARE(font_awesome_20_4);    // Font Awesome アイコンフォント
 
+/**
+ * @class Pmic
+ * @brief M5Stack CoreS3 専用PMIC制御クラス
+ * 
+ * AXP2101電源管理ICを使用してCoreS3の電源、バックライト、
+ * 充電制御を行います。CoreS3固有の初期化シーケンスを実装します。
+ */
 class Pmic : public Axp2101 {
 public:
-    // Power Init
+    /**
+     * @brief PMIC の初期化
+     * @param i2c_bus I2C マスターバスハンドル
+     * @param addr AXP2101 の I2C アドレス
+     * 
+     * M5Stack CoreS3 固有のPMIC初期化を行います。
+     * 電源レール、充電設定、バックライト制御を設定します。
+     */
     Pmic(i2c_master_bus_handle_t i2c_bus, uint8_t addr) : Axp2101(i2c_bus, addr) {
-        uint8_t data = ReadReg(0x90);
-        data |= 0b10110100;
-        WriteReg(0x90, data);
-        WriteReg(0x99, (0b11110 - 5));
-        WriteReg(0x97, (0b11110 - 2));
-        WriteReg(0x69, 0b00110101);
-        WriteReg(0x30, 0b111111);
-        WriteReg(0x90, 0xBF);
-        WriteReg(0x94, 33 - 5);
-        WriteReg(0x95, 33 - 5);
+        // CoreS3 固有の電源初期化シーケンス
+        uint8_t data = ReadReg(0x90);      // 電源制御レジスタ読み込み
+        data |= 0b10110100;                // 必要な電源レールを有効化
+        WriteReg(0x90, data);              // 設定を書き込み
+        
+        // バックライト制御の初期化
+        WriteReg(0x99, (0b11110 - 5));    // LDO4 電圧設定（バックライト用）
+        WriteReg(0x97, (0b11110 - 2));    // LDO3 電圧設定
+        
+        // 充電設定
+        WriteReg(0x69, 0b00110101);       // 充電電流・電圧設定
+        WriteReg(0x30, 0b111111);         // 電源出力制御
+        WriteReg(0x90, 0xBF);             // 最終電源設定
+        
+        // 追加の電源レール設定
+        WriteReg(0x94, 33 - 5);           // DC-DC1 電圧設定
+        WriteReg(0x95, 33 - 5);           // DC-DC2 電圧設定
     }
 
+    /**
+     * @brief バックライト明度の設定
+     * @param brightness 明度（0-100）
+     * 
+     * PMICのLDO4を使用してLCDバックライトの明度を制御します。
+     * 入力値を適切な電圧値に変換してレジスタに設定します。
+     */
     void SetBrightness(uint8_t brightness) {
+        // 明度値をPMICレジスタ値に変換
+        // 計算式: ((brightness + 641) >> 5) でスケーリング
         brightness = ((brightness + 641) >> 5);
-        WriteReg(0x99, brightness);
+        WriteReg(0x99, brightness);        // LDO4 電圧レジスタに書き込み
     }
 };
 
-
+/**
+ * @class CustomBacklight
+ * @brief CoreS3 専用バックライト制御クラス
+ * 
+ * PMICを通じてバックライト制御を行うCoreS3専用の実装です。
+ * 一般的なPWM制御ではなく、PMICのLDO出力電圧制御を使用します。
+ */
 class CustomBacklight : public Backlight {
 public:
+    /**
+     * @brief カスタムバックライトのコンストラクタ
+     * @param pmic PMIC制御オブジェクトへのポインタ
+     */
     CustomBacklight(Pmic *pmic) : pmic_(pmic) {}
 
+    /**
+     * @brief 実際の明度設定実装
+     * @param brightness 設定する明度（0-100）
+     * 
+     * PMICを通じてバックライトLDOの出力電圧を調整し、
+     * LCDバックライトの明度を制御します。
+     */
     void SetBrightnessImpl(uint8_t brightness) override {
-        pmic_->SetBrightness(target_brightness_);
-        brightness_ = target_brightness_;
+        pmic_->SetBrightness(target_brightness_);  // PMICに明度設定を送信
+        brightness_ = target_brightness_;           // 内部状態を更新
     }
 
 private:
-    Pmic *pmic_;
+    Pmic *pmic_;  /**< PMIC制御オブジェクトへのポインタ */
 };
 
 

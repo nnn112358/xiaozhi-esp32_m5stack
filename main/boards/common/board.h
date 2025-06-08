@@ -1,3 +1,10 @@
+/**
+ * @file board.h
+ * @brief ハードウェアボード抽象化クラス
+ * 
+ * このファイルはさまざまなESP32ボードのハードウェア抽象化レイヤーを提供します。
+ * 各ボードはこの基底クラスを継承し、固有のハードウェア構成を実装します。
+ */
 #ifndef BOARD_H
 #define BOARD_H
 
@@ -11,22 +18,35 @@
 #include "backlight.h"
 #include "camera.h"
 
+// ファクトリ関数：各ボード実装で定義される
 void* create_board();
 class AudioCodec;
 class Display;
+/**
+ * @class Board
+ * @brief ハードウェアボードの基底抽象クラス
+ * 
+ * このクラスはシングルトンパターンで実装され、すべてのボード固有の
+ * 機能（オーディオ、ディスプレイ、LED、ネットワークなど）への
+ * 統一インターフェースを提供します。
+ */
 class Board {
 private:
-    Board(const Board&) = delete; // 禁用拷贝构造函数
-    Board& operator=(const Board&) = delete; // 禁用赋值操作
+    Board(const Board&) = delete; // コピーコンストラクタを禁止
+    Board& operator=(const Board&) = delete; // 代入演算子を禁止
 
 protected:
     Board();
     std::string GenerateUuid();
 
-    // 软件生成的设备唯一标识
+    // ソフトウェアで生成されたデバイス固有識別子
     std::string uuid_;
 
 public:
+    /**
+     * @brief シングルトンインスタンス取得
+     * @return Board& ボードインスタンスの参照
+     */
     static Board& GetInstance() {
         static Board* instance = static_cast<Board*>(create_board());
         return *instance;
@@ -54,6 +74,12 @@ public:
     virtual std::string GetDeviceStatusJson() = 0;
 };
 
+/**
+ * @brief ボードクラス登録マクロ
+ * 
+ * 各ボード実装ファイルでこのマクロを使用して、
+ * ファクトリ関数を自動生成します。
+ */
 #define DECLARE_BOARD(BOARD_CLASS_NAME) \
 void* create_board() { \
     return new BOARD_CLASS_NAME(); \

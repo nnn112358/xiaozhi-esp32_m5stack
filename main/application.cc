@@ -1,3 +1,12 @@
+/**
+ * @file application.cc
+ * @brief XiaoZhi ESP32アプリケーションメインクラス実装
+ * 
+ * デバイス全体の動作を制御するApplicationクラスの実装ファイルです。
+ * 音声処理パイプライン、通信プロトコル、デバイス状態管理、
+ * IoTデバイス制御などの中核機能を実装しています。
+ */
+
 #include "application.h"
 #include "board.h"
 #include "display.h"
@@ -26,6 +35,7 @@
 #define TAG "Application"
 
 
+/** デバイス状態を表す文字列配列（デバッグ用） */
 static const char* const STATE_STRINGS[] = {
     "unknown",
     "starting",
@@ -40,16 +50,29 @@ static const char* const STATE_STRINGS[] = {
     "invalid_state"
 };
 
+/**
+ * @brief Applicationクラスコンストラクタ
+ * 
+ * アプリケーションの初期化を行います。
+ * イベントグループ、バックグラウンドタスク、音声プロセッサを初期化し、
+ * デバイスの基本設定を準備します。
+ */
 Application::Application() {
+    // FreeRTOSイベントグループを作成（状態同期用）
     event_group_ = xEventGroupCreate();
+    
+    // バックグラウンドタスクを初期化（28KBスタック）
     background_task_ = new BackgroundTask(4096 * 7);
 
 #if CONFIG_USE_AUDIO_PROCESSOR
+    // 音響エコーキャンセレーション有効時
     audio_processor_ = std::make_unique<AfeAudioProcessor>();
 #else
+    // ダミー音声プロセッサ使用時
     audio_processor_ = std::make_unique<DummyAudioProcessor>();
 #endif
 
+    // クロックタイマーを設定（定期的な時刻更新用）
     esp_timer_create_args_t clock_timer_args = {
         .callback = [](void* arg) {
             Application* app = (Application*)arg;
@@ -63,14 +86,25 @@ Application::Application() {
     esp_timer_create(&clock_timer_args, &clock_timer_handle_);
 }
 
+/**
+ * @brief Applicationクラスデストラクタ
+ * 
+ * アプリケーション終了時のクリーンアップを行います。
+ * タイマー、バックグラウンドタスク、イベントグループを解放します。
+ */
 Application::~Application() {
+    // クロックタイマーを停止・削除
     if (clock_timer_handle_ != nullptr) {
         esp_timer_stop(clock_timer_handle_);
         esp_timer_delete(clock_timer_handle_);
     }
+    
+    // バックグラウンドタスクを削除
     if (background_task_ != nullptr) {
         delete background_task_;
     }
+    
+    // イベントグループを削除
     vEventGroupDelete(event_group_);
 }
 

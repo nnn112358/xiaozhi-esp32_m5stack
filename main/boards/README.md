@@ -1,44 +1,44 @@
-# 自定义开发板指南
+# カスタム開発ボードガイド
 
-本指南介绍如何为小智AI语音聊天机器人项目定制一个新的开发板初始化程序。小智AI支持50多种ESP32系列开发板，每个开发板的初始化代码都放在对应的目录下。
+本ガイドでは、XiaoZhi AI音声チャットボットプロジェクト用の新しい開発ボード初期化プログラムをカスタマイズする方法を説明します。XiaoZhi AIは50種類以上のESP32シリーズ開発ボードをサポートしており、各開発ボードの初期化コードは対応するディレクトリに配置されています。
 
-## 重要提示
+## 重要な注意事項
 
-> **警告**: 对于自定义开发板，当IO配置与原有开发板不同时，切勿直接覆盖原有开发板的配置编译固件。必须创建新的开发板类型，或者通过config.json文件中的builds配置不同的name和sdkconfig宏定义来区分。使用 `python scripts/release.py [开发板目录名字]` 来编译打包固件。
+> **警告**: カスタム開発ボードで、IO設定が既存の開発ボードと異なる場合、既存の開発ボードの設定を直接上書きしてファームウェアをコンパイルしないでください。新しい開発ボードタイプを作成するか、config.jsonファイルのbuilds設定で異なるnameとsdkconfig macro定義を使用して区別する必要があります。`python scripts/release.py [開発ボードディレクトリ名]` を使用してファームウェアをコンパイル・パッケージ化してください。
 >
-> 如果直接覆盖原有配置，将来OTA升级时，您的自定义固件可能会被原有开发板的标准固件覆盖，导致您的设备无法正常工作。每个开发板有唯一的标识和对应的固件升级通道，保持开发板标识的唯一性非常重要。
+> 既存の設定を直接上書きすると、将来のOTAアップグレード時に、カスタムファームウェアが既存開発ボードの標準ファームウェアで上書きされ、デバイスが正常に動作しなくなる可能性があります。各開発ボードには固有の識別子と対応するファームウェアアップグレードチャネルがあり、開発ボード識別子の固有性を保つことが非常に重要です。
 
-## 目录结构
+## ディレクトリ構造
 
-每个开发板的目录结构通常包含以下文件：
+各開発ボードのディレクトリ構造には通常以下のファイルが含まれます：
 
-- `xxx_board.cc` - 主要的板级初始化代码，实现了板子相关的初始化和功能
-- `config.h` - 板级配置文件，定义了硬件管脚映射和其他配置项
-- `config.json` - 编译配置，指定目标芯片和特殊的编译选项
-- `README.md` - 开发板相关的说明文档
+- `xxx_board.cc` - メインのボードレベル初期化コード、ボード関連の初期化と機能を実装
+- `config.h` - ボードレベル設定ファイル、ハードウェアピンマッピングとその他の設定項目を定義
+- `config.json` - コンパイル設定、ターゲットチップと特別なコンパイルオプションを指定
+- `README.md` - 開発ボード関連の説明文書
 
-## 定制开发板步骤
+## カスタム開発ボードの手順
 
-### 1. 创建新的开发板目录
+### 1. 新しい開発ボードディレクトリの作成
 
-首先在`boards/`目录下创建一个新的目录，例如`my-custom-board/`：
+まず`boards/`ディレクトリ下に新しいディレクトリを作成します（例：`my-custom-board/`）：
 
 ```bash
 mkdir main/boards/my-custom-board
 ```
 
-### 2. 创建配置文件
+### 2. 設定ファイルの作成
 
 #### config.h
 
-在`config.h`中定义所有的硬件配置，包括:
+`config.h`ですべてのハードウェア設定を定義します：
 
-- 音频采样率和I2S引脚配置
-- 音频编解码芯片地址和I2C引脚配置
-- 按钮和LED引脚配置
-- 显示屏参数和引脚配置
+- オーディオサンプリングレートとI2Sピン設定
+- オーディオコーデックチップアドレスとI2Cピン設定
+- ボタンとLEDピン設定
+- ディスプレイパラメータとピン設定
 
-参考示例（来自lichuang-c3-dev）：
+参考例（lichuang-c3-devより）：
 
 ```c
 #ifndef _BOARD_CONFIG_H_
@@ -46,7 +46,7 @@ mkdir main/boards/my-custom-board
 
 #include <driver/gpio.h>
 
-// 音频配置
+// オーディオ設定
 #define AUDIO_INPUT_SAMPLE_RATE  24000
 #define AUDIO_OUTPUT_SAMPLE_RATE 24000
 
@@ -61,10 +61,10 @@ mkdir main/boards/my-custom-board
 #define AUDIO_CODEC_I2C_SCL_PIN  GPIO_NUM_1
 #define AUDIO_CODEC_ES8311_ADDR  ES8311_CODEC_DEFAULT_ADDR
 
-// 按钮配置
+// ボタン設定
 #define BOOT_BUTTON_GPIO        GPIO_NUM_9
 
-// 显示屏配置
+// ディスプレイ設定
 #define DISPLAY_SPI_SCK_PIN     GPIO_NUM_3
 #define DISPLAY_SPI_MOSI_PIN    GPIO_NUM_5
 #define DISPLAY_DC_PIN          GPIO_NUM_6
@@ -87,16 +87,16 @@ mkdir main/boards/my-custom-board
 
 #### config.json
 
-在`config.json`中定义编译配置:
+`config.json`でコンパイル設定を定義します：
 
 ```json
 {
-    "target": "esp32s3",  // 目标芯片型号: esp32, esp32s3, esp32c3等
+    "target": "esp32s3",  // ターゲットチップモデル: esp32, esp32s3, esp32c3など
     "builds": [
         {
-            "name": "my-custom-board",  // 开发板名称
+            "name": "my-custom-board",  // 開発ボード名
             "sdkconfig_append": [
-                // 额外需要的编译配置
+                // 追加で必要なコンパイル設定
                 "CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y",
                 "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions_8M.csv\""
             ]
@@ -105,16 +105,16 @@ mkdir main/boards/my-custom-board
 }
 ```
 
-### 3. 编写板级初始化代码
+### 3. ボードレベル初期化コードの記述
 
-创建一个`my_custom_board.cc`文件，实现开发板的所有初始化逻辑。
+`my_custom_board.cc`ファイルを作成し、開発ボードのすべての初期化ロジックを実装します。
 
-一个基本的开发板类定义包含以下几个部分：
+基本的な開発ボードクラス定義には以下の部分が含まれます：
 
-1. **类定义**：继承自`WifiBoard`或`ML307Board`
-2. **初始化函数**：包括I2C、显示屏、按钮、IoT等组件的初始化
-3. **虚函数重写**：如`GetAudioCodec()`、`GetDisplay()`、`GetBacklight()`等
-4. **注册开发板**：使用`DECLARE_BOARD`宏注册开发板
+1. **クラス定義**：`WifiBoard`または`ML307Board`から継承
+2. **初期化関数**：I2C、ディスプレイ、ボタン、IoTなどのコンポーネントの初期化を含む
+3. **仮想関数のオーバーライド**：`GetAudioCodec()`、`GetDisplay()`、`GetBacklight()`など
+4. **開発ボードの登録**：`DECLARE_BOARD`マクロを使用して開発ボードを登録
 
 ```cpp
 #include "wifi_board.h"
@@ -131,7 +131,7 @@ mkdir main/boards/my-custom-board
 
 #define TAG "MyCustomBoard"
 
-// 声明字体
+// フォント宣言
 LV_FONT_DECLARE(font_puhui_16_4);
 LV_FONT_DECLARE(font_awesome_16_4);
 
@@ -141,7 +141,7 @@ private:
     Button boot_button_;
     LcdDisplay* display_;
 
-    // I2C初始化
+    // I2C初期化
     void InitializeI2c() {
         i2c_master_bus_config_t i2c_bus_cfg = {
             .i2c_port = I2C_NUM_0,
@@ -158,7 +158,7 @@ private:
         ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &codec_i2c_bus_));
     }
 
-    // SPI初始化（用于显示屏）
+    // SPI初期化（ディスプレイ用）
     void InitializeSpi() {
         spi_bus_config_t buscfg = {};
         buscfg.mosi_io_num = DISPLAY_SPI_MOSI_PIN;
@@ -170,7 +170,7 @@ private:
         ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO));
     }
 
-    // 按钮初始化
+    // ボタン初期化
     void InitializeButtons() {
         boot_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
@@ -181,7 +181,7 @@ private:
         });
     }
 
-    // 显示屏初始化（以ST7789为例）
+    // ディスプレイ初期化（ST7789の例）
     void InitializeDisplay() {
         esp_lcd_panel_io_handle_t panel_io = nullptr;
         esp_lcd_panel_handle_t panel = nullptr;
@@ -208,7 +208,7 @@ private:
         esp_lcd_panel_swap_xy(panel, DISPLAY_SWAP_XY);
         esp_lcd_panel_mirror(panel, DISPLAY_MIRROR_X, DISPLAY_MIRROR_Y);
         
-        // 创建显示屏对象
+        // ディスプレイオブジェクトの作成
         display_ = new SpiLcdDisplay(panel_io, panel,
                                     DISPLAY_WIDTH, DISPLAY_HEIGHT, 
                                     DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, 
@@ -220,16 +220,16 @@ private:
                                     });
     }
 
-    // IoT设备初始化
+    // IoTデバイス初期化
     void InitializeIot() {
         auto& thing_manager = iot::ThingManager::GetInstance();
         thing_manager.AddThing(iot::CreateThing("Speaker"));
         thing_manager.AddThing(iot::CreateThing("Screen"));
-        // 可以添加更多IoT设备
+        // 追加のIoTデバイスを追加可能
     }
 
 public:
-    // 构造函数
+    // コンストラクタ
     MyCustomBoard() : boot_button_(BOOT_BUTTON_GPIO) {
         InitializeI2c();
         InitializeSpi();
@@ -239,7 +239,7 @@ public:
         GetBacklight()->SetBrightness(100);
     }
 
-    // 获取音频编解码器
+    // オーディオコーデックの取得
     virtual AudioCodec* GetAudioCodec() override {
         static Es8311AudioCodec audio_codec(
             codec_i2c_bus_, 
@@ -256,82 +256,82 @@ public:
         return &audio_codec;
     }
 
-    // 获取显示屏
+    // ディスプレイの取得
     virtual Display* GetDisplay() override {
         return display_;
     }
     
-    // 获取背光控制
+    // バックライト制御の取得
     virtual Backlight* GetBacklight() override {
         static PwmBacklight backlight(DISPLAY_BACKLIGHT_PIN, DISPLAY_BACKLIGHT_OUTPUT_INVERT);
         return &backlight;
     }
 };
 
-// 注册开发板
+// 開発ボードの登録
 DECLARE_BOARD(MyCustomBoard);
 ```
 
-### 4. 创建README.md
+### 4. README.mdの作成
 
-在README.md中说明开发板的特性、硬件要求、编译和烧录步骤：
+README.mdで開発ボードの特徴、ハードウェア要件、コンパイルとフラッシュ手順を説明します：
 
 
-## 常见开发板组件
+## 一般的な開発ボードコンポーネント
 
-### 1. 显示屏
+### 1. ディスプレイ
 
-项目支持多种显示屏驱动，包括:
+プロジェクトは複数のディスプレイドライバをサポートしています：
 - ST7789 (SPI)
 - ILI9341 (SPI)
 - SH8601 (QSPI)
-- 等...
+- など...
 
-### 2. 音频编解码器
+### 2. オーディオコーデック
 
-支持的编解码器包括:
-- ES8311 (常用)
-- ES7210 (麦克风阵列)
-- AW88298 (功放)
-- 等...
+サポートされているコーデック：
+- ES8311 (一般的)
+- ES7210 (マイクアレイ)
+- AW88298 (アンプ)
+- など...
 
-### 3. 电源管理
+### 3. 電源管理
 
-一些开发板使用电源管理芯片:
+一部の開発ボードは電源管理チップを使用：
 - AXP2101
-- 其他可用的PMIC
+- その他利用可能なPMIC
 
-### 4. IoT设备
+### 4. IoTデバイス
 
-可以添加各种IoT设备，让AI能够"看到"和控制:
-- Speaker (扬声器)
-- Screen (屏幕)
-- Battery (电池)
-- Light (灯光)
-- 等...
+さまざまなIoTデバイスを追加でき、AIが「見る」ことと制御を可能にします：
+- Speaker (スピーカー)
+- Screen (スクリーン)
+- Battery (バッテリー)
+- Light (ライト)
+- など...
 
-## 开发板类继承关系
+## 開発ボードクラス継承関係
 
-- `Board` - 基础板级类
-  - `WifiBoard` - WiFi连接的开发板
-  - `ML307Board` - 使用4G模块的开发板
+- `Board` - 基本ボードレベルクラス
+  - `WifiBoard` - WiFi接続の開発ボード
+  - `ML307Board` - 4Gモジュールを使用する開発ボード
 
-## 开发技巧
+## 開発のコツ
 
-1. **参考相似的开发板**：如果您的新开发板与现有开发板有相似之处，可以参考现有实现
-2. **分步调试**：先实现基础功能（如显示），再添加更复杂的功能（如音频）
-3. **管脚映射**：确保在config.h中正确配置所有管脚映射
-4. **检查硬件兼容性**：确认所有芯片和驱动程序的兼容性
+1. **類似の開発ボードを参照**：新しい開発ボードが既存の開発ボードと類似点がある場合、既存の実装を参照できます
+2. **段階的デバッグ**：まず基本機能（ディスプレイなど）を実装してから、より複雑な機能（オーディオなど）を追加します
+3. **ピンマッピング**：config.hですべてのピンマッピングを正しく設定することを確認してください
+4. **ハードウェア互換性の確認**：すべてのチップとドライバの互換性を確認してください
 
-## 可能遇到的问题
+## 発生する可能性のある問題
 
-1. **显示屏不正常**：检查SPI配置、镜像设置和颜色反转设置
-2. **音频无输出**：检查I2S配置、PA使能引脚和编解码器地址
-3. **无法连接网络**：检查WiFi凭据和网络配置
-4. **无法与服务器通信**：检查MQTT或WebSocket配置
+1. **ディスプレイが正常でない**：SPI設定、ミラー設定、色反転設定を確認してください
+2. **オーディオ出力がない**：I2S設定、PA有効ピン、コーデックアドレスを確認してください
+3. **ネットワークに接続できない**：WiFi資格情報とネットワーク設定を確認してください
+4. **サーバーと通信できない**：MQTTまたはWebSocket設定を確認してください
 
-## 参考资料
+## 参考資料
 
-- ESP-IDF 文档: https://docs.espressif.com/projects/esp-idf/
-- LVGL 文档: https://docs.lvgl.io/
-- ESP-SR 文档: https://github.com/espressif/esp-sr 
+- ESP-IDFドキュメント: https://docs.espressif.com/projects/esp-idf/
+- LVGLドキュメント: https://docs.lvgl.io/
+- ESP-SRドキュメント: https://github.com/espressif/esp-sr 
